@@ -130,6 +130,24 @@ section{position:relative}
   .h-l .w,.h-xl .w{filter:none;transform:translateY(18px)}
   .on .w{transform:none}
 }
+
+/* phone portfolio: sticky frame, photos rise like a curtain while scrolling */
+.mstage{display:none}
+.touch .curtain,.touch .cap,.touch .navs,.touch .fallback{display:none!important}
+.touch .mstage{display:block;position:relative}
+.msticky{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:70px 22px 22px}
+.mchips{display:flex;justify-content:space-between;gap:6px}
+.mchips span{flex:1 1 auto;white-space:nowrap;letter-spacing:.03em;font-size:10px;text-align:center;padding:9px 6px;border-radius:40px;border:1px solid var(--line);color:var(--mute);transition:background .5s,color .5s,border-color .5s}
+.mchips span.on{background:var(--ivory);color:var(--night);border-color:var(--ivory)}
+.mframe{position:relative;flex:0 1 auto;width:100%;aspect-ratio:4/5;max-height:calc(100svh - 230px);margin:0 auto;border-radius:6px;overflow:hidden;background:#111;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.mframe img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(100% 0 0 0);transform:scale(1.12);transition:clip-path .9s cubic-bezier(.7,0,.2,1),transform 1.3s cubic-bezier(.2,.7,.2,1);backface-visibility:hidden}
+.mframe img.in{clip-path:inset(0 0 0 0);transform:scale(1)}
+.mcap{display:flex;justify-content:space-between;align-items:baseline}
+.mcat{font-weight:200;font-size:30px;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.mcat.sw{animation:catIn .6s cubic-bezier(.2,.7,.2,1)}
+@keyframes catIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.mtrack{height:1px;background:var(--line);overflow:hidden}
+.mtrack i{display:block;height:100%;background:var(--ivory);transform-origin:left;transform:scaleX(0);transition:transform .5s}
 /* contact */
 .contact{padding:18vh 4vw 14vh;text-align:center;overflow:hidden}
 .contact .glow{position:absolute;left:50%;top:55%;width:70vw;aspect-ratio:1;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(120,60,170,.28),transparent 62%);pointer-events:none}
@@ -181,7 +199,7 @@ footer{padding:5vh 2.4vw 26px;border-top:1px solid var(--line)}
   .scroll{bottom:28px}
   .tag{gap:12px;margin-bottom:22px}
   .tag .ln{height:44px}
-  .works{padding:56px 0 64px}
+  .works{padding:56px 0 24px}
   .works .h-l{margin-bottom:8px}
   .curtain{height:min(118vw,520px);min-height:0}
   .cap{margin-top:6px}
@@ -226,6 +244,12 @@ footer{padding:5vh 2.4vw 26px;border-top:1px solid var(--line)}
 <section class="works" id="realisations">
   <div class="tag fade"><div class="ln"></div><svg class="st" viewBox="0 0 31 31"><path d="M15.5 0L18 13l13 2.5L18 18l-2.5 13L13 18 0 15.5 13 13z"/></svg><p class="p t-s">Réalisations</p></div>
   <h2 class="h-l blur">Nos décors,<br>en pleine lumière</h2>
+  <div class="mstage" id="mstage"><div class="msticky">
+    <div class="mchips t-s"><span data-c="Mariage">Mariage</span><span data-c="Houppa">Houppa</span><span data-c="Henné">Henné</span><span data-c="Bar Mitzvah">Bar Mitzvah</span></div>
+    <div class="mframe" id="mframe"></div>
+    <div class="mcap"><span class="mcat" id="mcat">Mariage</span><span class="t-s t-m" id="mnum">01 / 06</span></div>
+    <div class="mtrack"><i id="mbar"></i></div>
+  </div></div>
   <div class="curtain" id="curtain"></div>
   <div class="fallback" id="fallback"></div>
   <div class="cap t-s"><span id="pn">Mariage</span><span class="t-m" id="pi">01 / 18</span></div>
@@ -265,7 +289,6 @@ footer{padding:5vh 2.4vw 26px;border-top:1px solid var(--line)}
   <div class="f-row t-s t-m"><span>© Kinor Decor</span><a href="https://www.instagram.com/netanel.perez2/">Instagram</a><span>Design — nu studio</span></div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 {
 const P=[
@@ -363,6 +386,32 @@ tickL();
 const pn=document.getElementById('pn'),pi=document.getElementById('pi');
 let current=-1;const setCap=i=>{if(i===current)return;current=i;pn.textContent=P[i][1];pi.textContent=pad(i+1)+' / '+pad(N)};
 
+
+/* ---- phone: scroll-driven curtain, one photo per scroll step ---- */
+function initStage(){
+  const ORDER={'Mariage':0,'Houppa':1,'Henné':2,'Bar Mitzvah':3};
+  const S=P.map((p,i)=>[p[0],p[1],i]).sort((a,b)=>ORDER[a[1]]-ORDER[b[1]]||a[2]-b[2]);
+  const stage=document.getElementById('mstage'),frame=document.getElementById('mframe');
+  stage.style.height=`calc(${S.length} * 36svh + 100svh)`;
+  frame.innerHTML=S.map((p,i)=>`<img data-src="img/${p[0]}" alt="" style="z-index:${i+1}">`).join('');
+  const ims=[...frame.children],cat=document.getElementById('mcat'),num=document.getElementById('mnum'),bar=document.getElementById('mbar'),chips=[...document.querySelectorAll('.mchips span')];
+  const load=i=>{const im=ims[i];if(im&&!im.src)im.src=im.dataset.src};
+  let cur=-1;
+  const show=i=>{if(i===cur)return;cur=i;
+    for(let k=i;k<=i+2;k++)load(k);
+    ims.forEach((im,k)=>im.classList.toggle('in',k<=i));
+    const c=S[i][1],inCat=S.filter(s=>s[1]===c),pos=inCat.indexOf(S[i]);
+    if(cat.textContent!==c){cat.classList.remove('sw');void cat.offsetWidth;cat.classList.add('sw');cat.textContent=c}
+    num.textContent=pad(pos+1)+' / '+pad(inCat.length);
+    bar.style.transform=`scaleX(${(i+1)/S.length})`;
+    chips.forEach(ch=>ch.classList.toggle('on',ch.dataset.c===c))};
+  let raf=0;const onScroll=()=>{raf=0;const r=stage.getBoundingClientRect(),run=r.height-innerHeight;
+    const p=Math.min(.9999,Math.max(0,-r.top/run));show(Math.floor(p*S.length))};
+  addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(onScroll)},{passive:true});
+  load(0);load(1);show(0);onScroll();
+  P.forEach(()=>done());
+}
+function initCurtain(){
 /* ---- curved WebGL curtain ---- */
 const host=document.getElementById('curtain');
 let gl=null;
@@ -435,6 +484,9 @@ if(!gl){
     setCap(((Math.round(pos/STEP)%N)+N)%N);
     renderer.render(scene,cam)})();
 }
+}
+if(TOUCH){document.body.classList.add('touch');initStage()}
+else{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';sc.onload=sc.onerror=initCurtain;document.head.appendChild(sc)}
 }
 </script>
 </body>
